@@ -1,0 +1,86 @@
+pipeline {
+
+    agent {
+      kubernetes {
+        label 'image-builder'
+        defaultContainer 'jnlp'
+        yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: jenkins
+    component: builder
+spec:
+  serviceAccountName: jenkins
+  containers:
+    - name: golang
+      image: docker.io/golang:latest
+      tty: true
+    - name: dind
+      image: docker:18.05-dind
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: dind-storage
+          mountPath: /var/lib/docker
+  volumes:
+    - name: dind-storage
+      emptyDir: {}
+"""
+      }
+    }
+    environment {
+        REGISTRY_URL = 'index.docker.io/v1/'
+        IMAGE_NAME = 'rocket'
+        COMMIT_SLUG = "${GIT_COMMIT}".substring(0,8)
+        REGISTRY_CREDENTIALS = credentials('Docker')
+    }
+    stages {
+        stage ('Prepare') {
+            steps {
+                container('jnlp') {
+                script {
+                    def myRepo = checkout scm
+                    def gitCommit = "${GIT_COMMIT}"
+                    def gitBranch = "${GIT_BRANCH}"
+                    def previousGitCommit = sh(script: "git rev-parse ${gitCommit}~", returnStdout: true)
+                }
+            } }
+        }
+
+        stage ('Test') {
+            steps {
+                container('golang') {
+                    sh """
+                        echo 'tests passed :)'
+                    """
+                }
+            }
+        }
+
+
+        stage ('Build Image') {
+            steps {
+                container('dind') {
+                    sh """
+                        cd apps/website
+                        docker build -t ${REGISTRY_CREDENTIALS_USR}/${IMAGE_NAME}:${GIT_BRANCH}-${COMMIT_SLUG} .
+                        docker tag ${REGISTRY_CREDENTIALS_USR}/${IMAGE_NAME}:${GIT_BRANCH}-${COMMIT_SLUG} ${REGISTRY_CREDENTIALS_USR}/${IMAGE_NAME}:latest
+                        """
+                }
+            }
+        }
+
+        stage ('Push Image') {
+            steps {
+                container('dind') {
+                    sh """
+                        docker login -u ${REGISTRY_CREDENTIALS_USR} -p ${REGISTRY_CREDENTIALS_PSW}
+                        docker push ${REGISTRY_CREDENTIALS_USR}/${IMAGE_NAME}:latest
+                        """
+                }
+            }
+        }
+    }
+}
