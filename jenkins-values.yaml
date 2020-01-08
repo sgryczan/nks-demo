@@ -90,4 +90,4 @@ master:
         </factory>
       </org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject>
 persistence:
-  enabled: true
+  enabled: false
