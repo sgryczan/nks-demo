@@ -5,11 +5,12 @@
 replicaCount: 1
 
 image:
-  repository: sgryczan/rocket
+  repository: artifactory.netp5fki6k.nks.cloud/demo/rocket
   tag: latest
   pullPolicy: IfNotPresent
 
-imagePullSecrets: []
+imagePullSecrets:
+- name: regcred
 nameOverride: ""
 fullnameOverride: ""
 
@@ -41,14 +42,12 @@ ingress:
     kubernetes.io/ingress.class: nginx
     #  kubernetes.io/tls-acme: "true"
   hosts:
-    - host: rocket.netw49fejp.nks.cloud
+    - host: rocket.netp5fki6k.nks.cloud
       paths:
       - /
 
   tls:
   - secretName: wildcard-cert
-    hosts:
-    - rocket.netw49fejp.nks.cloud
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
