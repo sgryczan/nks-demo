@@ -31,7 +31,7 @@ spec:
       }
     }
     environment {
-        REGISTRY_URL = 'artifactory.netp5fki6k.nks.cloud/demo/'
+        REGISTRY_URL = 'artifactory.netp5fki6k.nks.cloud/demo'
         IMAGE_NAME = 'rocket'
         COMMIT_SLUG = "${GIT_COMMIT}".substring(0,8)
         REGISTRY_CREDENTIALS = credentials('Artifactory')
